@@ -8,10 +8,6 @@
 
 ## Build 3: Build image docker
 - Cấu hình docker file chi tiết theo dỗi trong file Dockerfile
-- Chạy lệnh `docker build -t bot-telegram:0.0.1 .`
-- Trong đó `bot-telegram` là tên image, `0.0.1` là version của image `. build với Dockerfile trong thư mục hiện tại`
-- Chạy lệnh `docker run -d --name bot-telegram bot-telegram:0.0.1` để start container.
-
-
-## 
-- bug git: git fetch —prune
+- Chạy lệnh `docker build -t lienquanbot:0.0.1 .`
+- Trong đó `lienquanbot:0.0.1` là tên image, `0.0.1` là version của image `. build với Dockerfile trong thư mục hiện tại`
+- Chạy lệnh `docker run -d --name lienquanbot lienquanbot:0.0.1` để start container.
