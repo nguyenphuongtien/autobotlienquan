@@ -35,8 +35,7 @@
 - Giới hạn số trận đấu của mỗi người chơi không vượt quá 5 trận BO3.
 - Tính điểm:
   - Thành viên đội thắng 2 điểm, Thua 1 điểm.
-  - Những người chơi có đăng ký trong tuần nhưng không được không tham gia trận đấu do không được random vào team được 1 điểm.
-  - Những người chơi không đăng ký trong tuần 0 điểm.
+  - Những người chơi không tham gia trận đấu 0 điểm.
 - Vòng loại sẽ kết thúc đến khi không thể chọn ra được danh sách 10 người chơi có số trận BO3 không vượt quá 5.
 #### Chung kết:
   - Top 7 người chơi có điểm cao nhất sẽ được chọn vào 2 đội chung kết.
