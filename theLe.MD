@@ -11,7 +11,7 @@
 ### 3. Hình thức đăng ký
 - Người chơi sẽ đăng ký thông tin vào mỗi thứ 2 đến hết 18h thứ sáu hằng tuần.
 - Thông tin đăng ký bao gồm: Tên Ingame, Rank [R1~R5].
-- Đăng ký qua link https://docs.google.com/spreadsheets/d/1qBWwxLbc9ACTPniBSBkvS-LuaD3595yVcphgmxZLZak/edit?gid=0#gid=0
+- Đăng ký qua link https://docs.google.com/spreadsheets/d/1qBWwxLbc9ACTPniBSBkvS-LuaD3595yVcphgmxZLZak/edit?usp=sharing
 - Chú ý: Hãy xác định rõ rank của mình để đảm bảo công bằng cho các đội.
 - Thông tin mức rank:
   - 5: Những người chơi có kỹ năng cao.
