@@ -16,7 +16,7 @@ PLAYER_DIEM_FILE = 'list_players_diem.txt'
 TEAM_A_FILE = 'team_a.txt'
 TEAM_B_FILE = 'team_b.txt'
 
-AUTHORIZED_USERS = [643097997,722793625]
+AUTHORIZED_USERS = [643097997,722793625,668057873,858032816]
 
 def restricted(func):
     async def wrapped(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
@@ -92,7 +92,9 @@ async def gettop(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Prepare the response message
         response = "Top người chơi:\n"
-        for i, (ingame_name, points) in enumerate(player_points[:10], start=1):
+        i = 0
+        for ingame_name, points in player_points:
+            i += 1
             response += f"{i}. {ingame_name}: {points} điểm\n"
 
         await update.message.reply_text(response)
@@ -150,35 +152,32 @@ async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def registerweek(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         args = context.args
-        if len(args) != 2:
-            await update.message.reply_text("Sai cú pháp: /registerweek <ingamename> <rank>")
+        if len(args) != 1:
+            await update.message.reply_text("Sai cú pháp: /registerweek <ingamename>")
             return
 
         ingame_name = args[0]
-        rank = args[1]
 
-        if rank not in ['R1', 'R2', 'R3', 'R4', 'R5']:
-            await update.message.reply_text("Sai cú pháp rank là một trong các giá trị: R1, R2, R3, R4, R5")
-            return
-
-        player_exists = False
+        rank = None
         if os.path.exists(PLAYER_FILE):
             with open(PLAYER_FILE, 'r') as file:
                 for line in file:
-                    if line.startswith(ingame_name + ','):
-                        player_exists = True
+                    name, player_rank = line.strip().split(',')
+                    if name == ingame_name:
+                        rank = player_rank
                         break
 
-        if not player_exists:
+        if rank is None:
             await update.message.reply_text(f"Người chơi {ingame_name} chưa được đăng ký trong hệ thống!")
             return
 
         player_week_exists = False
         if os.path.exists(PLAYER_WEEK_FILE):
-            with open(PLAYER_FILE, 'r') as file:
+            with open(PLAYER_WEEK_FILE, 'r') as file:
                 for line in file:
                     if line.startswith(ingame_name + ','):
                         player_week_exists = True
+                        break
 
         if player_week_exists:
             await update.message.reply_text(f"Người chơi {ingame_name} đã được đăng ký cho tuần này!")
@@ -186,7 +185,7 @@ async def registerweek(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         sotran = 0
         if os.path.exists(PLAYER_SOTRAN_FILE):
-            with open(PLAYER_FILE, 'r') as file:
+            with open(PLAYER_SOTRAN_FILE, 'r') as file:
                 for line in file:
                     name, sotrandata = line.strip().split(',')
                     if name == ingame_name:
@@ -291,6 +290,13 @@ async def resetplayerweek(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         with open(PLAYER_WEEK_FILE, 'w') as file:
             file.write('')
+
+        with open(TEAM_A_FILE, 'w') as file:
+            file.write('')
+
+        with open(TEAM_B_FILE, 'w') as file:
+            file.write('')
+
         await update.message.reply_text("Reset người chơi tuần này thành công!")
     except Exception as e:
         logging.error(f"Lỗi resetplayerweek command: {e}")
@@ -387,34 +393,133 @@ async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
             for player in players:
                 file.write(f"{player}\n")
 
+        if list_type == 'LISTALL':
+            with open(PLAYER_SOTRAN_FILE, 'r') as file:
+                players = [line.strip() for line in file.readlines()]
+
+            players = [player for player in players if not player.startswith(ingame_name + ',')]
+
+            with open(PLAYER_SOTRAN_FILE, 'w') as file:
+                for player in players:
+                    file.write(f"{player}\n")
+
+            with open(PLAYER_DIEM_FILE, 'r') as file:
+                players = [line.strip() for line in file.readlines()]
+
+            players = [player for player in players if not player.startswith(ingame_name + ',')]
+
+            with open(PLAYER_DIEM_FILE, 'w') as file:
+                for player in players:
+                    file.write(f"{player}\n")
+
         await update.message.reply_text(f"Đã xóa {ingame_name} khỏi danh sách {list_type.lower()}!")
     except Exception as e:
         logging.error(f"Lỗi trong remove: {e}")
         await update.message.reply_text("Lỗi không thể xóa người chơi!")
 
+async def getmatch(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        if not os.path.exists(TEAM_A_FILE) or not os.path.exists(TEAM_B_FILE):
+            await update.message.reply_text("Không có dữ liệu đội!")
+            return
+
+        team_a = []
+        team_b = []
+
+        with open(TEAM_A_FILE, 'r') as file:
+            team_a = [line.strip() for line in file.readlines()]
+
+        with open(TEAM_B_FILE, 'r') as file:
+            team_b = [line.strip() for line in file.readlines()]
+
+        if not team_a or not team_b:
+            await update.message.reply_text("Dữ liệu đội không đầy đủ!")
+            return
+
+        response = "Trận đấu:\n"
+        response += "Đội A:\n"
+        for player in team_a:
+            response += f"  - {player}\n"
+
+        response += "Đội B:\n"
+        for player in team_b:
+            response += f"  - {player}\n"
+
+        await update.message.reply_text(response)
+    except Exception as e:
+        logging.error(f"Lỗi trong getmatch: {e}")
+        await update.message.reply_text("Lỗi không thể lấy danh sách trận đấu!")
+
+@restricted
+async def congsotran(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        if not os.path.exists(TEAM_A_FILE) or not os.path.exists(TEAM_B_FILE):
+            await update.message.reply_text("Không có dữ liệu đội!")
+            return
+
+        team_a = []
+        team_b = []
+
+        with open(TEAM_A_FILE, 'r') as file:
+            team_a = [line.strip() for line in file.readlines()]
+
+        with open(TEAM_B_FILE, 'r') as file:
+            team_b = [line.strip() for line in file.readlines()]
+
+        players = team_a + team_b
+
+        if not os.path.exists(PLAYER_SOTRAN_FILE):
+            await update.message.reply_text("Không có dữ liệu số trận của người chơi!")
+            return
+
+        player_matches = {}
+        with open(PLAYER_SOTRAN_FILE, 'r') as file:
+            for line in file:
+                ingame_name, matches = line.strip().split(',')
+                player_matches[ingame_name] = int(matches)
+
+        for player in players:
+            if player in player_matches:
+                player_matches[player] += 1
+            else:
+                player_matches[player] = 1
+
+        with open(PLAYER_SOTRAN_FILE, 'w') as file:
+            for ingame_name, matches in player_matches.items():
+                file.write(f"{ingame_name},{matches}\n")
+
+        await update.message.reply_text("Đã cộng số trận cho các người chơi trong đội A và đội B!")
+    except Exception as e:
+        logging.error(f"Lỗi trong congsotran: {e}")
+        await update.message.reply_text("Lỗi không thể cộng số trận!")
+
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token('7988356940:AAGG13Q_EUHxPZJTE6WoYBn2YBX1lLgK2K0').build()
 
-    application.add_handler(CommandHandler('register', register))
+    application.add_handler(CommandHandler('dangky', register))
 
-    application.add_handler(CommandHandler('registerweek', registerweek))
+    application.add_handler(CommandHandler('dangkytuan', registerweek))
 
-    application.add_handler(CommandHandler('gettop', gettop))
+    application.add_handler(CommandHandler('laybxh', gettop))
 
-    application.add_handler(CommandHandler('getlistall', getlistall))
+    application.add_handler(CommandHandler('laydanhsachdangky', getlistall))
 
-    application.add_handler(CommandHandler('getlistofweek', getlistofweek))
+    application.add_handler(CommandHandler('laydanhsachtuan', getlistofweek))
 
     application.add_handler(CommandHandler('getuserid', get_user_id))
 
-    application.add_handler(CommandHandler('resetplayerweek', resetplayerweek))
+    application.add_handler(CommandHandler('reset', resetplayerweek))
 
-    application.add_handler(CommandHandler('pluspoint', pluspoint))
+    application.add_handler(CommandHandler('congdiem', pluspoint))
 
     application.add_handler(CommandHandler('random', random_teams))
 
     application.add_handler(CommandHandler('remove', remove))
+
+    application.add_handler(CommandHandler('xemtrandau', getmatch))
+
+    application.add_handler(CommandHandler('congsotran', congsotran))
 
 
     application.run_polling()
