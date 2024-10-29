@@ -16,7 +16,7 @@ PLAYER_DIEM_FILE = 'list_players_diem.txt'
 TEAM_A_FILE = 'team_a.txt'
 TEAM_B_FILE = 'team_b.txt'
 
-AUTHORIZED_USERS = [643097997,722793625,668057873,858032816]
+AUTHORIZED_USERS = [643097997,722793625,668057873,858032816,614591875]
 
 def restricted(func):
     async def wrapped(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
