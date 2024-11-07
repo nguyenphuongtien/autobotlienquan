@@ -219,8 +219,8 @@ async def random_teams(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         # sort theo số trận
-        players.sort(key=lambda x: x[2], reverse=True)
-        players = players[-10:]
+        # players.sort(key=lambda x: x[2], reverse=True)
+        # players = players[-10:]
 
         min_diff = float('inf')
         best_team_a = []
@@ -500,6 +500,21 @@ async def resetall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logging.error(f"Lỗi resetplayerweek command: {e}")
         await update.message.reply_text("Lỗi không thể reset !")
 
+@restricted
+async def xemluatthidau(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        if not os.path.exists('theLe.MD'):
+            await update.message.reply_text("Không tìm thấy file theLe.MD!")
+            return
+
+        with open('theLe.MD', 'r', encoding='utf-8') as file:
+            content = file.read()
+
+        await update.message.reply_text(content)
+    except Exception as e:
+        logging.error(f"Lỗi trong xemluatthidau: {e}")
+        await update.message.reply_text("Lỗi không thể hiển thị luật thi đấu!")
+
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token('7988356940:AAGG13Q_EUHxPZJTE6WoYBn2YBX1lLgK2K0').build()
@@ -530,5 +545,6 @@ if __name__ == '__main__':
 
     application.add_handler(CommandHandler('resetall', resetall))
 
+    application.add_handler(CommandHandler('xemluatthidau', xemluatthidau))
 
     application.run_polling()
