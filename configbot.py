@@ -16,7 +16,7 @@ PLAYER_DIEM_FILE = 'list_players_diem.txt'
 TEAM_A_FILE = 'team_a.txt'
 TEAM_B_FILE = 'team_b.txt'
 
-AUTHORIZED_USERS = [643097997,722793625,668057873,858032816,614591875]
+AUTHORIZED_USERS = [643097997,722793625,668057873,858032816,614591875,1006561573]
 
 def restricted(func):
     async def wrapped(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
@@ -102,11 +102,12 @@ async def gettop(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logging.error(f"Lỗi trong gettop: {e}")
         await update.message.reply_text("Lỗi không thể lấy danh sách top người chơi!")
 
+@restricted
 async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         args = context.args
         if len(args) != 2:
-            await update.message.reply_text("Sai cú pháp: /register <ingamename> <rank>")
+            await update.message.reply_text("Sai cú pháp: /dangky <ingamename> <rank>")
             return
 
         ingame_name = args[0]
@@ -153,7 +154,7 @@ async def registerweek(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         args = context.args
         if len(args) != 1:
-            await update.message.reply_text("Sai cú pháp: /registerweek <ingamename>")
+            await update.message.reply_text("Sai cú pháp: /dangkytuan <ingamename>")
             return
 
         ingame_name = args[0]
@@ -221,65 +222,45 @@ async def random_teams(update: Update, context: ContextTypes.DEFAULT_TYPE):
         players.sort(key=lambda x: x[2], reverse=True)
         players = players[-10:]
 
-        r1_players = [p for p in players if p[1] == 'R1']
-        r2_players = [p for p in players if p[1] == 'R2']
-        r3_players = [p for p in players if p[1] == 'R3']
-        r4_players = [p for p in players if p[1] == 'R4']
-        r5_players = [p for p in players if p[1] == 'R5']
+        min_diff = float('inf')
+        best_team_a = []
+        best_team_b = []
+        best_team_a_points = 0
+        best_team_b_points = 0
 
-        random.shuffle(r1_players)
-        random.shuffle(r2_players)
-        random.shuffle(r3_players)
-        random.shuffle(r4_players)
-        random.shuffle(r5_players)
+        for _ in range(1000):
+            random.shuffle(players)
+            team_a = players[:5]
+            team_b = players[5:10]
 
-        teams = [[], []]
-        team_points = [0, 0]
+            team_a_points = sum(int(player[1][1]) for player in team_a)
+            team_b_points = sum(int(player[1][1]) for player in team_b)
 
-        def add_player_to_team(player, team_index):
-            teams[team_index].append(player[0])
-            team_points[team_index] += int(player[1][1])
-
-        while r1_players or r2_players or r3_players or r4_players or r5_players:
-            for i in range(2):
-                if r1_players:
-                    add_player_to_team(r1_players.pop(), i)
-                elif r2_players:
-                    add_player_to_team(r2_players.pop(), i)
-                elif r3_players:
-                    add_player_to_team(r3_players.pop(), i)
-                elif r4_players:
-                    add_player_to_team(r4_players.pop(), i)
-                elif r5_players:
-                    add_player_to_team(r5_players.pop(), i)
+            diff = abs(team_a_points - team_b_points)
+            if diff < min_diff:
+                min_diff = diff
+                best_team_a = team_a
+                best_team_b = team_b
+                best_team_a_points = team_a_points
+                best_team_b_points = team_b_points
 
         with open(TEAM_A_FILE, 'w') as file:
-            file.write('')
+            for player in best_team_a:
+                file.write(f"{player[0]}\n")
 
         with open(TEAM_B_FILE, 'w') as file:
-            file.write('')
-
-        with open(TEAM_A_FILE, 'a+') as file:
-            for i in teams[0]:
-                file.seek(0, os.SEEK_END)
-                if file.tell() > 0:
-                    file.write(f"\n{i}")
-                else:
-                    file.write(f"{i}")
-
-        with open(TEAM_B_FILE, 'a+') as file:
-            for i in teams[1]:
-                file.seek(0, os.SEEK_END)
-                if file.tell() > 0:
-                    file.write(f"\n{i}")
-                else:
-                    file.write(f"{i}")
+            for player in best_team_b:
+                file.write(f"{player[0]}\n")
 
         response = "Teams đã random:\n"
-        for i, team in enumerate(teams):
-            response += f"Team {i + 1} (Points: {team_points[i]}):\n"
-            for player in team:
-                response += f"  - {player}\n"
+        response += f"Team A (Points: {best_team_a_points}):\n"
+        for player in best_team_a:
+            response += f"  - {player[0]}\n"
+
+        response += f"Team B (Points: {best_team_b_points}):\n"
+        for player in best_team_b:
+            response += f"  - {player[0]}\n"
+
         await update.message.reply_text(response)
     except Exception as e:
         logging.error(f"Error in random_teams command: {e}")
@@ -307,7 +288,7 @@ async def pluspoint(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         args = context.args
         if len(args) != 2:
-            await update.message.reply_text("Sai cú pháp: /pluspoint <TEAMNAME> <point>")
+            await update.message.reply_text("Sai cú pháp: /congdiem <TEAMNAME> <point>")
             return
 
         team_name = args[0].upper()
@@ -493,6 +474,32 @@ async def congsotran(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logging.error(f"Lỗi trong congsotran: {e}")
         await update.message.reply_text("Lỗi không thể cộng số trận!")
 
+@restricted
+async def resetall(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        with open(PLAYER_FILE, 'w') as file:
+            file.write('')
+
+        with open(PLAYER_DIEM_FILE, 'w') as file:
+            file.write('')
+
+        with open(PLAYER_SOTRAN_FILE, 'w') as file:
+            file.write('')
+
+        with open(PLAYER_WEEK_FILE, 'w') as file:
+            file.write('')
+
+        with open(TEAM_A_FILE, 'w') as file:
+            file.write('')
+
+        with open(TEAM_B_FILE, 'w') as file:
+            file.write('')
+
+        await update.message.reply_text("Đã thiết lập lại tất cả dữ liệu!")
+    except Exception as e:
+        logging.error(f"Lỗi resetplayerweek command: {e}")
+        await update.message.reply_text("Lỗi không thể reset !")
+
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token('7988356940:AAGG13Q_EUHxPZJTE6WoYBn2YBX1lLgK2K0').build()
@@ -520,6 +527,8 @@ if __name__ == '__main__':
     application.add_handler(CommandHandler('xemtrandau', getmatch))
 
     application.add_handler(CommandHandler('congsotran', congsotran))
+
+    application.add_handler(CommandHandler('resetall', resetall))
 
 
     application.run_polling()
