@@ -500,7 +500,6 @@ async def resetall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logging.error(f"Lỗi resetplayerweek command: {e}")
         await update.message.reply_text("Lỗi không thể reset !")
 
-@restricted
 async def xemluatthidau(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         if not os.path.exists('theLe.MD'):
