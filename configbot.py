@@ -15,6 +15,7 @@ PLAYER_SOTRAN_FILE = 'list_players_sotran.txt'
 PLAYER_DIEM_FILE = 'list_players_diem.txt'
 TEAM_A_FILE = 'team_a.txt'
 TEAM_B_FILE = 'team_b.txt'
+PLAYER_SOLO_FILE = 'list_players_solo.txt'
 
 AUTHORIZED_USERS = [643097997,722793625,668057873,858032816,614591875,1006561573]
 
@@ -73,7 +74,31 @@ async def getlistofweek(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(response)
     except Exception as e:
         logging.error(f"Lỗi trong quá trình getlistofweek: {e}")
-        await update.message.reply_text("Lỗi trong quá trình getlistofweek!")\
+        await update.message.reply_text("Lỗi trong quá trình getlistofweek!")
+
+async def getlistsolo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        if not os.path.exists(PLAYER_SOLO_FILE):
+            await update.message.reply_text("Không có người chơi đăng ký!")
+            return
+
+        players = []
+        with open(PLAYER_SOLO_FILE, 'r') as file:
+            for line in file:
+                ingame_name, rank = line.strip().split(',')
+                players.append((ingame_name, rank))
+
+        players.sort(key=lambda x: x[1], reverse=True)
+        stt = 0
+        response = "Danh sách người chơi đăng ký:\n"
+        for ingame_name, rank in players:
+            stt = stt + 1
+            response += f"{stt}. {rank} {ingame_name} \n"
+
+        await update.message.reply_text(response)
+    except Exception as e:
+        logging.error(f"Lỗi: {e}")
+        await update.message.reply_text("Lỗi trong quá trình getlistsolo!")
 
 async def gettop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -101,6 +126,33 @@ async def gettop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logging.error(f"Lỗi trong gettop: {e}")
         await update.message.reply_text("Lỗi không thể lấy danh sách top người chơi!")
+
+async def getsotran(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        if not os.path.exists(PLAYER_SOTRAN_FILE):
+            await update.message.reply_text("Không có dữ liệu số trận của người chơi!")
+            return
+
+        player_sotran = []
+        with open(PLAYER_SOTRAN_FILE, 'r') as file:
+            for line in file:
+                ingame_name, sotran = line.strip().split(',')
+                player_sotran.append((ingame_name, int(sotran)))
+
+        # Sort players by points in descending order
+        player_sotran.sort(key=lambda x: x[1], reverse=True)
+
+        # Prepare the response message
+        response = "Số trận người chơi:\n"
+        i = 0
+        for ingame_name, sotran in player_sotran:
+            i += 1
+            response += f"{i}. {ingame_name}: {sotran} trận\n"
+
+        await update.message.reply_text(response)
+    except Exception as e:
+        logging.error(f"Lỗi trong getsotran: {e}")
+        await update.message.reply_text("Lỗi không thể lấy danh sách số trận người chơi!")
 
 @restricted
 async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -200,6 +252,48 @@ async def registerweek(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logging.error(f"Lỗi registerweek command: {e}")
         await update.message.reply_text("Lỗi không thể đăng ký!.")
 
+async def registersolo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        args = context.args
+        if len(args) != 1:
+            await update.message.reply_text("Sai cú pháp: /dangkysolo <ingamename>")
+            return
+
+        ingame_name = args[0]
+
+        rank = None
+        if os.path.exists(PLAYER_FILE):
+            with open(PLAYER_FILE, 'r') as file:
+                for line in file:
+                    name, player_rank = line.strip().split(',')
+                    if name == ingame_name:
+                        rank = player_rank
+                        break
+
+        if rank is None:
+            await update.message.reply_text(f"Người chơi {ingame_name} chưa được đăng ký trong hệ thống!")
+            return
+
+        player_solo_exists = False
+        if os.path.exists(PLAYER_SOLO_FILE):
+            with open(PLAYER_SOLO_FILE, 'r') as file:
+                for line in file:
+                    if line.startswith(ingame_name + ','):
+                        player_solo_exists = True
+                        break
+
+        if player_solo_exists:
+            await update.message.reply_text(f"Người chơi {ingame_name} đã được đăng ký solo!")
+            return
+
+        with open(PLAYER_SOLO_FILE, 'a') as file:
+            file.write(f"\n{ingame_name},{rank}")
+
+        await update.message.reply_text(f"Chào mừng {ingame_name} {rank} đã đăng ký solo cùng bolero!")
+    except Exception as e:
+        logging.error(f"Lỗi command: {e}")
+        await update.message.reply_text("Lỗi không thể đăng ký!.")
+
 @restricted
 async def random_teams(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -221,6 +315,68 @@ async def random_teams(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # sort theo số trận
         # players.sort(key=lambda x: x[2], reverse=True)
         # players = players[-10:]
+
+        min_diff = float('inf')
+        best_team_a = []
+        best_team_b = []
+        best_team_a_points = 0
+        best_team_b_points = 0
+
+        for _ in range(1000):
+            random.shuffle(players)
+            team_a = players[:5]
+            team_b = players[5:10]
+
+            team_a_points = sum(int(player[1][1]) for player in team_a)
+            team_b_points = sum(int(player[1][1]) for player in team_b)
+
+            diff = abs(team_a_points - team_b_points)
+            if diff < min_diff:
+                min_diff = diff
+                best_team_a = team_a
+                best_team_b = team_b
+                best_team_a_points = team_a_points
+                best_team_b_points = team_b_points
+
+        with open(TEAM_A_FILE, 'w') as file:
+            for player in best_team_a:
+                file.write(f"{player[0]}\n")
+
+        with open(TEAM_B_FILE, 'w') as file:
+            for player in best_team_b:
+                file.write(f"{player[0]}\n")
+
+        response = "Teams đã random:\n"
+        response += f"Team A (Points: {best_team_a_points}):\n"
+        for player in best_team_a:
+            response += f"  - {player[0]}\n"
+
+        response += f"Team B (Points: {best_team_b_points}):\n"
+        for player in best_team_b:
+            response += f"  - {player[0]}\n"
+
+        await update.message.reply_text(response)
+    except Exception as e:
+        logging.error(f"Error in random_teams command: {e}")
+        await update.message.reply_text("Lỗi không thể random")
+
+@restricted
+async def random_solo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        if not os.path.exists(PLAYER_SOLO_FILE):
+            await update.message.reply_text("Chưa có người chơi đăng ký!")
+            return
+
+        players = []
+
+        with open(PLAYER_SOLO_FILE, 'r') as file:
+            for line in file:
+                ingame_name, rank = line.strip().split(',')
+                players.append((ingame_name, rank))
+
+        if len(players) < 10:
+            await update.message.reply_text("Số người chơi dưới 10 người không thể random team!")
+            return
 
         min_diff = float('inf')
         best_team_a = []
@@ -522,11 +678,15 @@ if __name__ == '__main__':
 
     application.add_handler(CommandHandler('dangkytuan', registerweek))
 
+    application.add_handler(CommandHandler('dangkysolo', registersolo))
+
     application.add_handler(CommandHandler('laybxh', gettop))
 
     application.add_handler(CommandHandler('laydanhsachdangky', getlistall))
 
     application.add_handler(CommandHandler('laydanhsachtuan', getlistofweek))
+
+    application.add_handler(CommandHandler('laydanhsachsolo', getlistsolo))
 
     application.add_handler(CommandHandler('getuserid', get_user_id))
 
@@ -536,9 +696,13 @@ if __name__ == '__main__':
 
     application.add_handler(CommandHandler('random', random_teams))
 
+    application.add_handler(CommandHandler('randomsolo', random_solo))
+
     application.add_handler(CommandHandler('remove', remove))
 
     application.add_handler(CommandHandler('xemtrandau', getmatch))
+
+    application.add_handler(CommandHandler('laysotran', getsotran))
 
     application.add_handler(CommandHandler('congsotran', congsotran))
 

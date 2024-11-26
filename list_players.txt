@@ -1,6 +1,6 @@
 HaiTayHaiBe,R2
-critis,R4
-sonic,R4
+critis,R3
+sonic,R5
 Luffy,R3
 Ibook,R3
 Jackie,R5
@@ -8,7 +8,7 @@ NCT,R5
 dlycute,R5
 ITer.Le_on,R5
 staronly,R1
-ATK909,R4
+ᴀ̂ᵐ.ᴛᵃ̀ⁱ.ᴋʰᵒᵃ̉ⁿ,R3
 MAX,R5
 LạcLạc,R4
 JoEBidEN,R2
