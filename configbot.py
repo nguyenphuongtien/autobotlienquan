@@ -28,6 +28,24 @@ def restricted(func):
         return await func(update, context, *args, **kwargs)
     return wrapped
 
+async def randomone(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        args = context.args
+        if len(args) != 1:
+            await update.message.reply_text("Sai cú pháp: /randomone <list>")
+            return
+
+        items = args[0].split(',')
+        if not items:
+            await update.message.reply_text("Danh sách không hợp lệ!")
+            return
+
+        random_item = random.choice(items)
+        await update.message.reply_text(f"Người chơi được chọn: {random_item}")
+    except Exception as e:
+        logging.error(f"Lỗi trong randomone: {e}")
+        await update.message.reply_text("Lỗi không thể lấy chuỗi ngẫu nhiên!")
+
 async def getlistall(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         if not os.path.exists(PLAYER_FILE):
@@ -709,5 +727,7 @@ if __name__ == '__main__':
     application.add_handler(CommandHandler('resetall', resetall))
 
     application.add_handler(CommandHandler('xemluatthidau', xemluatthidau))
+
+    application.add_handler(CommandHandler('randomone', randomone))
 
     application.run_polling()
