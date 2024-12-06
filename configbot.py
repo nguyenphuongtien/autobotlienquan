@@ -220,6 +220,7 @@ async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logging.error(f"Lỗi trong register: {e}")
         await update.message.reply_text("Lỗi không thể đăng ký!")
 
+@restricted
 async def registerweek(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         args = context.args
@@ -263,7 +264,7 @@ async def registerweek(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         sotran = int(sotrandata)
 
         with open(PLAYER_WEEK_FILE, 'a') as file:
-            file.write(f"\n{ingame_name},{rank},{sotran}")
+            file.write(f"{ingame_name},{rank},{sotran}\n")
 
         await update.message.reply_text(f"Chào mừng {ingame_name} {rank} đã đăng ký tuần này thành công!")
     except Exception as e:
@@ -305,7 +306,7 @@ async def registersolo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         with open(PLAYER_SOLO_FILE, 'a') as file:
-            file.write(f"\n{ingame_name},{rank}")
+            file.write(f"{ingame_name},{rank}\n")
 
         await update.message.reply_text(f"Chào mừng {ingame_name} {rank} đã đăng ký solo cùng bolero!")
     except Exception as e:
@@ -453,6 +454,17 @@ async def resetplayerweek(update: Update, context: ContextTypes.DEFAULT_TYPE):
             file.write('')
 
         await update.message.reply_text("Reset người chơi tuần này thành công!")
+    except Exception as e:
+        logging.error(f"Lỗi resetplayerweek command: {e}")
+        await update.message.reply_text("Lỗi không thể reset người chơi tuần này!")
+
+@restricted
+async def resetplayesolo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        with open(PLAYER_SOLO_FILE, 'w') as file:
+            file.write('')
+
+        await update.message.reply_text("Reset danh sách solo thành công!")
     except Exception as e:
         logging.error(f"Lỗi resetplayerweek command: {e}")
         await update.message.reply_text("Lỗi không thể reset người chơi tuần này!")
@@ -709,6 +721,8 @@ if __name__ == '__main__':
     application.add_handler(CommandHandler('getuserid', get_user_id))
 
     application.add_handler(CommandHandler('reset', resetplayerweek))
+
+    application.add_handler(CommandHandler('resetsolo', resetplayesolo))
 
     application.add_handler(CommandHandler('congdiem', pluspoint))
 
